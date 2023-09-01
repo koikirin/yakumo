@@ -8,9 +8,8 @@ declare module 'yakumo' {
   }
 
   export interface Hooks {
-    'execute.prepare'?: (project: Project, name: string) => Awaitable<true | void>
-    'execute.before'?: (project: Project, name: string) => Awaitable<void>
-    'execute.after'?: (project: Project, name: string) => Awaitable<void>
+    'execute.prepare': (project: Project, name: string) => Awaitable<true | void>
+    'execute.before': (project: Project, name: string) => Awaitable<void>
   }
 }
 
@@ -22,6 +21,11 @@ Project.prototype.serial = async (name: string, ...args: any) => {
 }
 
 function setTargets(project: Project) {
+  if (!project.argv._.length || project.argv.config.manual) {
+    project.targets = { ...project.workspaces }
+    return
+  }
+
   project.targets = pick(project.workspaces, project.argv._.flatMap((name: string) => {
     return project.locate(name)
   }))
@@ -36,7 +40,6 @@ export function register(name: string, callback: (project: Project) => void, opt
     }
     await project.serial('execute.before', project, name)
     const ret = callback(project)
-    await project.emit('execute.after', project, name)
     return ret
   }, { ...options, manual: true }]
 }
