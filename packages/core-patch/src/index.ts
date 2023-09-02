@@ -8,8 +8,9 @@ declare module 'yakumo' {
   }
 
   export interface Hooks {
-    'execute.prepare': (project: Project, name: string) => Awaitable<true | void>
-    'execute.before': (project: Project, name: string) => Awaitable<void>
+    'execute.targets': (project: Project, name: string) => Awaitable<true | void>
+    'execute.prepare': (project: Project, name: string) => Awaitable<void>
+    'execute.before': (project: Project, name: string) => Awaitable<true | ((project: Project) => void) | void>
   }
 }
 
@@ -35,12 +36,13 @@ export function register(name: string, callback: (project: Project) => void, opt
   const manual = options.manual
   commands[name] = [async (project) => {
     project.argv.config.manual = manual
-    if (!await project.serial('execute.prepare', project, name)) {
+    if (!await project.serial('execute.targets', project, name)) {
       setTargets(project)
     }
-    await project.serial('execute.before', project, name)
-    const ret = callback(project)
-    return ret
+    await project.serial('execute.prepare', project, name)
+    const before = await project.serial('execute.before', project, name)
+    if (before === true) return
+    return (before || callback)(project)
   }, { ...options, manual: true }]
 }
 
