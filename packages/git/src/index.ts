@@ -1,6 +1,6 @@
 import { CheckRepoActions, SimpleGit, simpleGit } from 'simple-git'
 import { cyan, green, red, yellow } from 'kleur'
-import { Project, register } from 'yakumo'
+import { Options, Project, register } from 'yakumo'
 import { isAbsolute, relative, resolve } from 'path'
 import {} from 'yakumo-core-patch'
 import {} from 'yakumo-locate'
@@ -21,7 +21,52 @@ function isSubdirectoryOf(dir: string, parent: string) {
   return relpath && !relpath.startsWith('..') && !isAbsolute(relpath)
 }
 
-async function status(project: Project, name: string) {
+const subcommands: Record<string, (project: Project, name: string) => Promise<boolean>> = {}
+
+const options: Options = {
+  alias: {
+    dry: ['d'],
+    message: ['m'],
+    remote: ['r'],
+    branch: ['b'],
+    workingDirectories: ['W'],
+    root: ['R'],
+  },
+  default: {
+    message: '',
+  },
+  boolean: ['dry'],
+  manual: true,
+}
+
+register('git', async (project) => {
+  const subcommand = project.argv._.shift()
+  const action = subcommands[subcommand]
+  if (!subcommand || !action) return
+
+  await project.emit('locate.trigger', project, 'git', { root: true })
+
+  const counter = (await Promise.all(
+    Object.keys(project.targets).map(name => action(project, name)),
+  )).filter(x => x).length
+
+  console.log(green(`Successfully processed ${counter} repositories`))
+}, options)
+
+function registerSubcommand(cmd: string, action: (project: Project, name: string) => Promise<boolean>, options?: Options) {
+  subcommands[cmd] = action
+  register(`git/${cmd}`, async (project) => {
+    await project.emit('locate.trigger', project, 'git', { root: true })
+
+    const counter = (await Promise.all(
+      Object.keys(project.targets).map(name => action(project, name)),
+    )).filter(x => x).length
+
+    console.log(green(`Successfully processed ${counter} repositories`))
+  }, options)
+}
+
+registerSubcommand('status', async (project, name) => {
   try {
     if (!name) return false
     const git: SimpleGit = simpleGit(name.slice(1))
@@ -44,9 +89,9 @@ async function status(project: Project, name: string) {
     console.log(red(name), e)
     return false
   }
-}
+}, options)
 
-async function add(project: Project, name: string) {
+registerSubcommand('add', async (project, name) => {
   try {
     if (!name) return false
     const git: SimpleGit = simpleGit(name.slice(1))
@@ -58,9 +103,9 @@ async function add(project: Project, name: string) {
     console.log(red(name), e)
     return false
   }
-}
+}, options)
 
-async function commit(project: Project, name: string) {
+registerSubcommand('commit', async (project, name) => {
   try {
     if (!name) return false
     const git: SimpleGit = simpleGit(name.slice(1))
@@ -72,9 +117,9 @@ async function commit(project: Project, name: string) {
     console.log(red(name), e)
     return false
   }
-}
+}, options)
 
-async function push(project: Project, name: string) {
+registerSubcommand('push', async (project, name) => {
   try {
     if (!name) return false
     const git: SimpleGit = simpleGit(name.slice(1))
@@ -87,9 +132,9 @@ async function push(project: Project, name: string) {
     console.log(red(name), e)
     return false
   }
-}
+}, options)
 
-async function chore(project: Project, name: string) {
+registerSubcommand('chore', async (project, name) => {
   try {
     if (!name) return false
     const git: SimpleGit = simpleGit(name.slice(1))
@@ -107,40 +152,4 @@ async function chore(project: Project, name: string) {
     console.log(red(name), e)
     return false
   }
-}
-
-const subcommands: Record<string, (project: Project, name: string) => Promise<boolean>> = {
-  status,
-  add,
-  commit,
-  push,
-  chore,
-}
-
-register('git', async (project) => {
-  const subcommand = project.argv._.shift()
-  const action = subcommands[subcommand]
-  if (!subcommand || !action) return
-
-  await project.emit('locate.trigger', project, 'git', { root: true })
-
-  const counter = (await Promise.all(
-    Object.keys(project.targets).map(name => action(project, name)),
-  )).filter(x => x).length
-
-  console.log(green(`Successfully processed ${counter} repositories`))
-}, {
-  alias: {
-    dry: ['d'],
-    message: ['m'],
-    remote: ['r'],
-    branch: ['b'],
-    workingDirectories: ['W'],
-    root: ['R'],
-  },
-  default: {
-    message: '',
-  },
-  boolean: ['dry'],
-  manual: true,
-})
+}, options)
