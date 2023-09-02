@@ -76,8 +76,7 @@ function locate(project: Project, name: string, options: LocateOptions = {}) {
 async function setTargets(project: Project, name: string, options: LocateOptions = {}) {
   const o = { root: false, folder: true, package: true, ...project.argv.locate || {}, ...options }
   const excludes = project.config.commands?.[name]?.['exclude-patterns']?.flatMap(name => locate(project, name, o)) || []
-  const includes = project.argv._.flatMap((arg: string) => locate(project, arg, o))
-
+  const includes = (project.argv._.length ? project.argv._ : ['*']).flatMap((arg: string) => locate(project, arg, o))
   project.targets = pick(project.workspaces, difference(includes, excludes))
 
   console.log(cyan(`[${name}]`), green(`Located ${Object.keys(project.targets).length} workspaces`))
@@ -86,7 +85,7 @@ async function setTargets(project: Project, name: string, options: LocateOptions
 addHook('execute.prepare', () => true)
 
 addHook('execute.before', (project, name) => {
-  if (!project.argv._.length || project.argv.config.manual) {
+  if (project.argv.config.manual) {
     project.targets = { ...project.workspaces }
     return
   }
