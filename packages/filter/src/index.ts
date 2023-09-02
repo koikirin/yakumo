@@ -12,8 +12,9 @@ export interface FilterConfig {
   'filter-targets'?: Eval.Expr<boolean>
 }
 
-addHook('execute.before', async (project, name) => {
-  const expr = project.config.commands?.[name]?.['filter-targets']
+addHook('execute.prepare', async (project, name) => {
+  const parent = name.split('/')[0]
+  const expr = project.config.commands?.[name]?.['filter-targets'] ?? project.config.commands?.[parent]?.['filter-targets']
   if (!expr) return
   project.targets = Object.fromEntries(Object.entries(project.targets).filter(([path, json]) => {
     return executeEval({ _: { path, ...json } }, expr)
