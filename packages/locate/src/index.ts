@@ -13,7 +13,7 @@ declare module 'yakumo' {
   }
 
   export interface Arguments {
-    locate: LocateConfig | false
+    locate: LocateOptions | false
   }
 }
 
@@ -75,16 +75,16 @@ function locate(project: Project, name: string, options: LocateOptions = {}) {
 
 async function setTargets(project: Project, name: string, options: LocateOptions = {}) {
   const o = { root: false, folder: true, package: true, ...project.argv.locate || {}, ...options }
-  const excludes = project.config.commands?.[name]?.['exclude-patterns']?.flatMap(name => locate(project, name, o)) || []
+  const parent = name.split('/')[0]
+  const excludes = (project.config.commands?.[name]?.['exclude-patterns'] ?? project.config.commands?.[parent]?.['exclude-patterns'])
+    ?.flatMap(name => locate(project, name, o)) || []
   const includes = (project.argv._.length ? project.argv._ : ['*']).flatMap((arg: string) => locate(project, arg, o))
   project.targets = pick(project.workspaces, difference(includes, excludes))
-
-  console.log(cyan(`[${name}]`), green(`Located ${Object.keys(project.targets).length} workspaces`))
 }
 
-addHook('execute.prepare', () => true)
+addHook('execute.targets', () => true)
 
-addHook('execute.before', (project, name) => {
+addHook('execute.prepare', (project, name) => {
   if (project.argv.config.manual) {
     project.targets = { ...project.workspaces }
     return
@@ -98,6 +98,13 @@ addHook('execute.before', (project, name) => {
   }
 
   setTargets(project, name)
+})
+
+addHook('execute.before', (project, name) => {
+  if (project.argv.config.manual || project.argv.locate === false) {
+    return
+  }
+  console.log(cyan(`[${name}]`), green(`Located ${Object.keys(project.targets).length} workspaces`))
 })
 
 addHook('locate.trigger', setTargets)
