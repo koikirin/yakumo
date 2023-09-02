@@ -13,7 +13,6 @@ export interface FilterConfig {
 }
 
 addHook('execute.before', async (project, name) => {
-  console.log(project.argv)
   const expr = project.config.commands?.[name]?.['filter-targets']
   if (!expr) return
   project.targets = Object.fromEntries(Object.entries(project.targets).filter(([path, json]) => {
