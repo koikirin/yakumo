@@ -1,4 +1,4 @@
-# yakumo-filter-targets
+# yakumo-filter
 
 [![downloads](https://img.shields.io/npm/dm/yakumo-filter?style=flat-square)](https://www.npmjs.com/package/yakumo-filter)
 [![npm](https://img.shields.io/npm/v/yakumo-filter?style=flat-square)](https://www.npmjs.com/package/yakumo-filter)
