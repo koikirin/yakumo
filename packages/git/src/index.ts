@@ -106,14 +106,23 @@ registerSubcommand('add', async (project, name, git) => {
 }, options)
 
 registerSubcommand('commit', async (project, name, git) => {
-  const res = await git.add('.').commit(project.argv.message)
+  const res = await git.commit(project.argv.message)
   return !!res.commit
 }, options)
 
 registerSubcommand('push', async (project, name, git) => {
-  const s = await git.status()
-  if (s.isClean()) await git.push(project.argv.remote, project.argv.branch)
-  return true
+  if ((await git.status()).isClean()) {
+    await git.push(project.argv.remote, project.argv.branch)
+    return true
+  }
+}, options)
+
+registerSubcommand('acp', async (project, name, git) => {
+  const r = await git
+    .add('.')
+    .commit(project.argv.message)
+    .push(project.argv.remote, project.argv.branch)
+  return !!r.pushed.length
 }, options)
 
 registerSubcommand('chore', async (project, name, git) => {
