@@ -23,12 +23,12 @@ function isSubdirectoryOf(dir: string, parent: string) {
 }
 
 async function isRepository(project: Project, name: string, git?: SimpleGit) {
-  if (!name) return false
+  if (!name || !project.targets[name]) return false
   git ??= simpleGit(name.slice(1))
 
   const gitDir = await git.raw('rev-parse', '--git-dir')
   if (gitDir.trim().startsWith('fatal:')) return false
-  else if (gitDir.trim() === '.git') return project.argv.root || project.argv.rootOnly
+  else if (gitDir.trim() === '.git') return !project.targets[name].workspaces || project.argv.root || project.argv.rootOnly
   else return !project.argv.rootOnly
 }
 
@@ -92,7 +92,7 @@ registerSubcommand('status', async (project, name, git) => {
   const files = (await git.status()).files
     .filter(f => isSubdirectoryOf(f.path, relRoot) && (f.path = relative(relRoot, f.path)))
     .filter(f => !project.argv.workingDirectories || project.argv.workingDirectories.includes(f.working_dir))
-    .map(f => `${(yellow(f.working_dir))} ${f.path} ${grey('=>')} ${(join(name.slice(1), f.path))}`)
+    .map(f => `${(yellow(f.working_dir))} ${f.path} ${grey('->')} ${(join(name.slice(1), f.path))}`)
   if (files.length) {
     console.log(cyan(name))
     console.log(files.join('\n'))
@@ -122,7 +122,7 @@ registerSubcommand('acp', async (project, name, git) => {
     .add('.')
     .commit(project.argv.message)
     .push(project.argv.remote, project.argv.branch)
-  return !!r.pushed.length
+  return !r.pushed.length
 }, options)
 
 registerSubcommand('chore', async (project, name, git) => {
