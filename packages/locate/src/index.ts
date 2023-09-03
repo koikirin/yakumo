@@ -1,5 +1,5 @@
-import { cyan, green } from 'kleur'
-import { addHook, Project } from 'yakumo'
+import { bold, cyan, green, reset } from 'kleur'
+import { addHook, confirm, Project } from 'yakumo'
 import { Awaitable, difference, makeArray, pick } from 'cosmokit'
 import {} from 'yakumo-core-patch'
 
@@ -105,7 +105,15 @@ addHook('execute.before', async function (path) {
   if (this.argv.config.manual || this.argv.locate === false) {
     return
   }
-  console.log(cyan(`[${path}]`), green(`Located ${Object.keys(this.targets).length} workspaces`))
+  if (this.argv.locate?.ask) {
+    const confirmed = await confirm(
+      `${cyan(`[${path}]`)} ${green(`Located ${Object.keys(this.targets).length} workspaces:`)}
+  ${reset(Object.values(this.targets).map(json => json.name).join(' '))}
+  ${bold('Continue to execute ?')}`)
+    if (!confirmed) return true
+  } else {
+    console.log(cyan(`[${path}]`), green(`Located ${Object.keys(this.targets).length} workspaces.`))
+  }
 })
 
 addHook('locate.trigger', async function (path) { setTargets(this, path) })
