@@ -8,9 +8,9 @@ declare module 'yakumo' {
   }
 
   export interface Hooks {
-    'execute.targets': (this: Project, path: string) => Awaitable<true | void>
+    'execute.targets': (this: Project, path: string) => Awaitable<boolean | void>
     'execute.prepare': (this: Project, path: string) => Awaitable<void>
-    'execute.before': (this: Project, path: string) => Awaitable<true | ((project: Project) => void) | void>
+    'execute.before': (this: Project, path: string) => Awaitable<boolean | ((project: Project) => void) | void>
   }
 }
 
