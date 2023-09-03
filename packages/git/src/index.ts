@@ -78,8 +78,8 @@ register('git', async (project) => {
   if (!subcommand || !action) return
 
   project.argv.config.manual = false
-  await project.emit('execute.prepare', project, 'git')
-  await project.emit('execute.before', project, 'git')
+  await project.emit('execute.prepare', 'git')
+  await project.emit('execute.before', 'git')
 
   await runAction(project, action)
 }, { ...options, manual: true })

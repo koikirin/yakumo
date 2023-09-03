@@ -1,7 +1,7 @@
 {
   "name": "yakumo-git",
   "description": "Git operations in Yakumo workspaces",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [

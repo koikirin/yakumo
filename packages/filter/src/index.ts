@@ -12,11 +12,11 @@ export interface FilterConfig {
   'filter-targets'?: Eval.Expr<boolean>
 }
 
-addHook('execute.prepare', async (project, name) => {
-  const parent = name.split('/')[0]
-  const expr = project.config.commands?.[name]?.['filter-targets'] ?? project.config.commands?.[parent]?.['filter-targets']
+addHook('execute.prepare', async function (path) {
+  const parent = path.split('/')[0]
+  const expr = this.config.commands?.[path]?.['filter-targets'] ?? this.config.commands?.[parent]?.['filter-targets']
   if (!expr) return
-  project.targets = Object.fromEntries(Object.entries(project.targets).filter(([path, json]) => {
-    return executeEval({ _: { path, ...json } }, expr)
+  this.targets = Object.fromEntries(Object.entries(this.targets).filter(([name, json]) => {
+    return executeEval({ _: { path: name, ...json } }, expr)
   }))
 })

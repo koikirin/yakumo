@@ -5,7 +5,7 @@ import {} from 'yakumo-core-patch'
 
 declare module 'yakumo' {
   export interface Hooks {
-    'locate.trigger'?: (project: Project, name: string, options?: LocateOptions) => Awaitable<void>
+    'locate.trigger'?: (this: Project, path: string, options?: LocateOptions) => Awaitable<void>
   }
 
   export interface Commands {
@@ -22,6 +22,7 @@ export interface LocateConfig {
 }
 
 export interface LocateOptions {
+  ask?: boolean
   root?: boolean
   folder?: boolean
   package?: boolean
@@ -84,27 +85,27 @@ async function setTargets(project: Project, name: string, options: LocateOptions
 
 addHook('execute.targets', () => true)
 
-addHook('execute.prepare', (project, name) => {
-  if (project.argv.config.manual) {
-    project.targets = { ...project.workspaces }
+addHook('execute.prepare', async function (path) {
+  if (this.argv.config.manual) {
+    this.targets = { ...this.workspaces }
     return
   }
 
-  if (project.argv.locate === false && !project.targets?.length) {
-    project.targets = pick(project.workspaces, project.argv._.flatMap((name: string) => {
-      return project.locate(name)
+  if (this.argv.locate === false && !this.targets?.length) {
+    this.targets = pick(this.workspaces, this.argv._.flatMap((name: string) => {
+      return this.locate(name)
     }))
     return
   }
 
-  setTargets(project, name)
+  setTargets(this, path)
 })
 
-addHook('execute.before', (project, name) => {
-  if (project.argv.config.manual || project.argv.locate === false) {
+addHook('execute.before', async function (path) {
+  if (this.argv.config.manual || this.argv.locate === false) {
     return
   }
-  console.log(cyan(`[${name}]`), green(`Located ${Object.keys(project.targets).length} workspaces`))
+  console.log(cyan(`[${path}]`), green(`Located ${Object.keys(this.targets).length} workspaces`))
 })
 
-addHook('locate.trigger', setTargets)
+addHook('locate.trigger', async function (path) { setTargets(this, path) })
