@@ -27,8 +27,8 @@ The name comes from the Japanese word "八雲". In Touhou Project, Yakumo Yukari
 
 # @hieuzest/yakumo-prelude
 
-[![downloads](https://img.shields.io/npm/dm/yakumo-prelude?style=flat-square)](https://www.npmjs.com/package/yakumo-prelude)
-[![npm](https://img.shields.io/npm/v/yakumo-prelude?style=flat-square)](https://www.npmjs.com/package/yakumo-prelude)
+[![downloads](https://img.shields.io/npm/dm/@hieuzest/yakumo-prelude?style=flat-square)](https://www.npmjs.com/package/@hieuzest/yakumo-prelude)
+[![npm](https://img.shields.io/npm/v/@hieuzest/yakumo-prelude?style=flat-square)](https://www.npmjs.com/package/@hieuzest/yakumo-prelude)
 [![GitHub](https://img.shields.io/github/license/Hieuzest/yakumo?style=flat-square)](https://github.com/Hieuzest/yakumo/blob/master/LICENSE)
 
 Prelude Yakumo requirements.
