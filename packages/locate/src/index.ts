@@ -5,7 +5,7 @@ import {} from 'yakumo-core-patch'
 
 declare module 'yakumo' {
   export interface Hooks {
-    'locate.trigger'?: (this: Project, path: string, options?: LocateOptions) => Awaitable<void>
+    'locate.trigger'?: (this: Project, name: string, options?: LocateOptions) => Awaitable<void>
   }
 
   export interface Commands {
@@ -85,7 +85,7 @@ async function setTargets(project: Project, name: string, options: LocateOptions
 
 addHook('execute.targets', () => true)
 
-addHook('execute.prepare', async function (path) {
+addHook('execute.prepare', async function (name) {
   if (this.argv.config.manual) {
     this.targets = { ...this.workspaces }
     return
@@ -98,22 +98,22 @@ addHook('execute.prepare', async function (path) {
     return
   }
 
-  setTargets(this, path)
+  setTargets(this, name)
 })
 
-addHook('execute.before', async function (path) {
+addHook('execute.before', async function (name) {
   if (this.argv.config.manual || this.argv.locate === false) {
     return
   }
   if (this.argv.locate?.ask) {
     const confirmed = await confirm(
-      `${cyan(`[${path}]`)} ${green(`Located ${Object.keys(this.targets).length} workspaces:`)}
+      `${cyan(`[${name}]`)} ${green(`Located ${Object.keys(this.targets).length} workspaces:`)}
   ${reset(Object.values(this.targets).map(json => json.name).join(' '))}
   ${bold('Continue to execute ?')}`)
     if (!confirmed) return true
   } else {
-    console.log(cyan(`[${path}]`), green(`Located ${Object.keys(this.targets).length} workspaces.`))
+    console.log(cyan(`[${name}]`), green(`Located ${Object.keys(this.targets).length} workspaces.`))
   }
 })
 
-addHook('locate.trigger', async function (path) { setTargets(this, path) })
+addHook('locate.trigger', async function (name) { setTargets(this, name) })

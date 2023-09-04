@@ -52,14 +52,14 @@ const options: Options = {
 
 async function runAction(project: Project, action: Action) {
   const counter = (await Promise.all(
-    Object.keys(project.targets).map(async name => {
-      if (!name) return false
-      const git: SimpleGit = simpleGit(name.slice(1))
+    Object.keys(project.targets).map(async path => {
+      if (!path) return false
+      const git: SimpleGit = simpleGit(path.slice(1))
       try {
-        if (!await isRepository(project, name, git)) return false
-        return await action(project, name, git)
+        if (!await isRepository(project, path, git)) return false
+        return await action(project, path, git)
       } catch (e) {
-        console.log(red(name), e)
+        console.log(red(path), e)
         return false
       }
     }),
@@ -78,46 +78,46 @@ register('git', async (project) => {
   if (!subcommand || !action) return
 
   project.argv.config.manual = false
-  await project.emit('execute.prepare', 'git')
-  await project.emit('execute.before', 'git')
+  await project.serial('execute.prepare', 'git')
+  if (await project.serial('execute.before', 'git')) return
 
   await runAction(project, action)
 }, { ...options, manual: true })
 
-registerSubcommand('status', async (project, name, git) => {
-  const packageRoot = resolve(process.cwd(), name.slice(1)),
+registerSubcommand('status', async (project, path, git) => {
+  const packageRoot = resolve(process.cwd(), path.slice(1)),
     gitRoot = (await git.raw('rev-parse', '--git-dir')).trim().slice(0, -4) || packageRoot,
     relRoot = relative(gitRoot, packageRoot)
 
   const files = (await git.status()).files
     .filter(f => isSubdirectoryOf(f.path, relRoot) && (f.path = relative(relRoot, f.path)))
     .filter(f => !project.argv.workingDirectories || project.argv.workingDirectories.includes(f.working_dir))
-    .map(f => `${(yellow(f.working_dir))} ${f.path} ${grey('->')} ${(join(name.slice(1), f.path))}`)
+    .map(f => `${(yellow(f.working_dir))} ${f.path} ${grey('->')} ${(join(path.slice(1), f.path))}`)
   if (files.length) {
-    console.log(cyan(name))
+    console.log(cyan(path))
     console.log(files.join('\n'))
   }
   return true
 }, options)
 
-registerSubcommand('add', async (project, name, git) => {
+registerSubcommand('add', async (project, path, git) => {
   await git.add('.')
   return true
 }, options)
 
-registerSubcommand('commit', async (project, name, git) => {
+registerSubcommand('commit', async (project, path, git) => {
   const res = await git.commit(project.argv.message)
   return !!res.commit
 }, options)
 
-registerSubcommand('push', async (project, name, git) => {
+registerSubcommand('push', async (project, path, git) => {
   if ((await git.status()).isClean()) {
     await git.push(project.argv.remote, project.argv.branch)
     return true
   }
 }, options)
 
-registerSubcommand('acp', async (project, name, git) => {
+registerSubcommand('acp', async (project, path, git) => {
   const r = await git
     .add('.')
     .commit(project.argv.message)
@@ -125,7 +125,7 @@ registerSubcommand('acp', async (project, name, git) => {
   return !r.pushed.length
 }, options)
 
-registerSubcommand('chore', async (project, name, git) => {
+registerSubcommand('chore', async (project, path, git) => {
   const s = await git.status()
   const files = s.files
     .filter(f => ['M', ' '].includes(f.working_dir) && f.path.split('/').reverse()[0] === 'package.json')

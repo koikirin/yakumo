@@ -1,7 +1,7 @@
 {
   "name": "yakumo-core-patch",
   "description": "Yakumo core patch",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -26,5 +26,8 @@
   ],
   "peerDependencies": {
     "yakumo": "^0.3.13"
+  },
+  "dependencies": {
+    "yargs": "^17.7.2"
   }
 }
