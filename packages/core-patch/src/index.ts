@@ -1,6 +1,7 @@
 import { Awaitable, pick, Promisify } from 'cosmokit'
 import { addHook, commands, hooks, Options, Project } from 'yakumo'
 import { Options as ParserOptions } from 'yargs-parser'
+import unparse from 'yargs-unparser'
 import * as yargs_ from 'yargs'
 
 declare module 'yakumo' {
@@ -24,7 +25,7 @@ declare module 'yakumo' {
 declare module 'yargs' {
   interface Argv {
     getOptions(): ParserOptions
-    build(): ParserOptions
+    build<T extends ParserOptions>(config?: T): T
   }
 }
 
@@ -47,21 +48,15 @@ function setTargets(project: Project) {
 }
 
 async function beforeExecute(project: Project, name: string, options: Options = {}) {
-  if (options.argv && project.argv.help) {
-    options.argv.showHelp()
-    return true
-  }
-
-  if (options.argv && project.argv.version) {
-    options.argv.showVersion()
-    return true
-  }
-
   if (!await project.serial('execute.targets', name)) {
     setTargets(project)
   }
   await project.serial('execute.prepare', name)
-  return await project.serial('execute.before', name)
+  const ret = await project.serial('execute.before', name)
+  if (ret !== true && options.argv) {
+    await options.argv.parseAsync(unparse(project.argv))
+  }
+  return ret
 }
 
 export function register(name: string, callback: (project: Project) => void, options: Options = {}) {
@@ -82,7 +77,7 @@ addHook('execute.trigger', async function (name: string, options: Options) {
 
 export function yargs() {
   const argv = yargs_.default()
-  argv.build = () => ({ argv, ...argv.getOptions() })
+  argv.build = <T extends ParserOptions>(config?: T) => ({ argv, ...argv.getOptions(), ...config })
   return argv
 }
 

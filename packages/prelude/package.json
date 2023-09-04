@@ -1,7 +1,7 @@
 {
   "name": "@hieuzest/yakumo-prelude",
   "description": "Prelude Yakumo requirements",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -11,8 +11,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Hieuzest/yakumo.git",
-    "directory": "packages/prelude"
+    "url": "git+https://github.com/Hieuzest/yakumo.git"
   },
   "bugs": {
     "url": "https://github.com/Hieuzest/yakumo/issues"
@@ -26,7 +25,7 @@
   ],
   "peerDependencies": {
     "yakumo": "^0.3.13",
-    "yakumo-core-patch": "^0.4.1",
+    "yakumo-core-patch": "^0.4.2",
     "yakumo-filter": "^0.3.1",
     "yakumo-locate": "^0.3.2",
     "yakumo-rewrite": "^0.2.0"
