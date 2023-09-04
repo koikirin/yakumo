@@ -1,5 +1,5 @@
 import { Awaitable, pick, Promisify } from 'cosmokit'
-import { commands, hooks, Options, Project } from 'yakumo'
+import { addHook, commands, hooks, Options, Project } from 'yakumo'
 import { Options as ParserOptions } from 'yargs-parser'
 import * as yargs_ from 'yargs'
 
@@ -13,7 +13,7 @@ declare module 'yakumo' {
     'execute.targets': (this: Project, name: string) => Awaitable<boolean | void>
     'execute.prepare': (this: Project, name: string) => Awaitable<void>
     'execute.before': (this: Project, name: string) => Awaitable<boolean | ((project: Project) => void) | void>
-    'execute.trigger': (this: Project, name: string) => Awaitable<boolean | void>
+    'execute.trigger': (this: Project, name: string, options: Options) => Awaitable<boolean | void>
   }
 
   export interface Options {
@@ -46,7 +46,7 @@ function setTargets(project: Project) {
   }))
 }
 
-async function beforeExecute(name: string, project: Project, options: Options = {}) {
+async function beforeExecute(project: Project, name: string, options: Options = {}) {
   if (options.argv && project.argv.help) {
     options.argv.showHelp()
     return true
@@ -68,7 +68,7 @@ export function register(name: string, callback: (project: Project) => void, opt
   const manual = options.manual
   commands[name] = [async (project) => {
     project.argv.config.manual = manual
-    const before = await beforeExecute(name, project, options)
+    const before = await beforeExecute(project, name, options)
     if (before === true) return
     return (before || callback)(project)
   }, { ...options, manual: true }]
@@ -76,8 +76,24 @@ export function register(name: string, callback: (project: Project) => void, opt
 
 require('yakumo').register = register
 
+addHook('execute.trigger', async function (name: string, options: Options) {
+  return !!await beforeExecute(this, name, options)
+})
+
 export function yargs() {
   const argv = yargs_.default()
   argv.build = () => ({ argv, ...argv.getOptions() })
   return argv
+}
+
+export function declareYargs(name: string, argv: yargs_.Argv) {
+  if (commands[name]) {
+    if (commands[name][1]) {
+      commands[name][1].argv ||= argv
+    } else {
+      commands[name][1] = { argv }
+    }
+  } else {
+    commands[name] = [null, { argv }]
+  }
 }

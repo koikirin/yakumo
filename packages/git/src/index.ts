@@ -2,20 +2,10 @@ import { SimpleGit, simpleGit } from 'simple-git'
 import { cyan, green, grey, red, yellow } from 'kleur'
 import { Options, Project, register } from 'yakumo'
 import { isAbsolute, join, relative, resolve } from 'path'
-import {} from 'yakumo-core-patch'
+import parse from 'yargs-parser'
+import unparse from 'yargs-unparser'
+import { yargs as yargs_ } from 'yakumo-core-patch'
 import {} from 'yakumo-locate'
-
-declare module 'yakumo' {
-  interface Arguments {
-    dry?: boolean
-    root?: boolean
-    rootOnly?: boolean
-    workingDirectories?: string
-    message: string
-    remote?: string
-    branch?: string
-  }
-}
 
 function isSubdirectoryOf(dir: string, parent: string) {
   const relpath = relative(parent, dir)
@@ -34,20 +24,14 @@ async function isRepository(project: Project, name: string, git?: SimpleGit) {
 
 type Action = (project: Project, name: string, git: SimpleGit) => Promise<boolean>
 
-const subcommands: Record<string, Action> = {}
+const subcommands: Record<string, [Action, Options]> = {}
 
-const options: Options = {
-  alias: {
-    message: ['m'],
-    workingDirectories: ['W'],
-    root: ['r'],
-    rootOnly: ['R'],
-  },
-  default: {
-    message: '',
-    locate: { root: true },
-  },
-  boolean: ['dry', 'root', 'rootOnly', 'verbose'],
+function yargs() {
+  return yargs_()
+    .option('root', { type: 'boolean', alias: 'r' })
+    .option('rootOnly', { type: 'boolean', alias: 'R' })
+    .option('dry', { type: 'boolean' })
+    .default('locate.root', true)
 }
 
 async function runAction(project: Project, action: Action) {
@@ -68,21 +52,21 @@ async function runAction(project: Project, action: Action) {
 }
 
 function registerSubcommand(cmd: string, action: Action, options?: Options) {
-  subcommands[cmd] = action
+  subcommands[cmd] = [action, options]
   register(`git/${cmd}`, (project) => runAction(project, action), options)
 }
 
 register('git', async (project) => {
   const subcommand = project.argv._.shift()
-  const action = subcommands[subcommand]
-  if (!subcommand || !action) return
+  if (!subcommand || !subcommands[subcommand]) return
+  const [action, options] = subcommands[subcommand]
 
-  project.argv.config.manual = false
-  await project.serial('execute.prepare', 'git')
-  if (await project.serial('execute.before', 'git')) return
+  project.argv.config = undefined
+  project.argv = { config: options, ...parse(unparse(project.argv), options) }
 
+  if (await project.serial('execute.trigger', 'git', options)) return
   await runAction(project, action)
-}, { ...options, manual: true })
+}, { manual: true })
 
 registerSubcommand('status', async (project, path, git) => {
   const packageRoot = resolve(process.cwd(), path.slice(1)),
@@ -98,24 +82,24 @@ registerSubcommand('status', async (project, path, git) => {
     console.log(files.join('\n'))
   }
   return true
-}, options)
+}, yargs().option('workingDirectories', { type: 'string', alias: 'W' }).build())
 
 registerSubcommand('add', async (project, path, git) => {
   await git.add('.')
   return true
-}, options)
+}, yargs().build())
 
 registerSubcommand('commit', async (project, path, git) => {
   const res = await git.commit(project.argv.message)
   return !!res.commit
-}, options)
+}, yargs().option('message', { type: 'string', alias: 'm', default: '' }).build())
 
 registerSubcommand('push', async (project, path, git) => {
   if ((await git.status()).isClean()) {
     await git.push(project.argv.remote, project.argv.branch)
     return true
   }
-}, options)
+}, yargs().option('remote', { type: 'string' }).option('branch', { type: 'string' }).build())
 
 registerSubcommand('acp', async (project, path, git) => {
   const r = await git
@@ -123,7 +107,11 @@ registerSubcommand('acp', async (project, path, git) => {
     .commit(project.argv.message)
     .push(project.argv.remote, project.argv.branch)
   return !r.pushed.length
-}, options)
+}, yargs()
+  .option('message', { type: 'string', alias: 'm', default: '' })
+  .option('remote', { type: 'string' })
+  .option('branch', { type: 'string' })
+  .build())
 
 registerSubcommand('chore', async (project, path, git) => {
   const s = await git.status()
@@ -134,4 +122,4 @@ registerSubcommand('chore', async (project, path, git) => {
     await git.add(files).commit(project.argv.message || 'chore: bump versions')
     return true
   }
-}, options)
+}, yargs().option('message', { type: 'string', alias: 'm', default: '' }).build())

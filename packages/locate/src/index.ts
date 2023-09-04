@@ -13,7 +13,7 @@ declare module 'yakumo' {
   }
 
   export interface Arguments {
-    locate: LocateOptions | false
+    locate?: LocateOptions | false
   }
 }
 
