@@ -1,10 +1,8 @@
+import { isAbsolute, join, relative, resolve } from 'path'
 import { SimpleGit, simpleGit } from 'simple-git'
 import { cyan, green, grey, red, yellow } from 'kleur'
 import { Options, Project, register } from 'yakumo'
-import { isAbsolute, join, relative, resolve } from 'path'
-import parse from 'yargs-parser'
-import unparse from 'yargs-unparser'
-import { yargs as yargs_ } from 'yakumo-core-patch'
+import { parse, unparse, yargs as yargs_ } from 'yakumo-core-patch'
 import {} from 'yakumo-locate'
 
 function isSubdirectoryOf(dir: string, parent: string) {
@@ -12,14 +10,27 @@ function isSubdirectoryOf(dir: string, parent: string) {
   return relpath && !relpath.startsWith('..') && !isAbsolute(relpath)
 }
 
-async function isRepository(project: Project, name: string, git?: SimpleGit) {
-  if (!name || !project.targets[name]) return false
+// async function isRepository(project: Project, name: string, git?: SimpleGit) {
+//   if (!name || !project.targets[name]) return false
+//   git ??= simpleGit(name.slice(1))
+
+//   const gitDir = await git.raw('rev-parse', '--git-dir')
+//   if (gitDir.trim().startsWith('fatal:')) return false
+//   else if (gitDir.trim() === '.git') return !project.targets[name].workspaces || project.argv.root || project.argv.rootOnly
+//   else return !project.argv.rootOnly
+// }
+
+async function getRepositoryRoot(project: Project, name: string, git?: SimpleGit) {
+  if (!name || !project.targets[name]) return
   git ??= simpleGit(name.slice(1))
 
   const gitDir = await git.raw('rev-parse', '--git-dir')
-  if (gitDir.trim().startsWith('fatal:')) return false
-  else if (gitDir.trim() === '.git') return !project.targets[name].workspaces || project.argv.root || project.argv.rootOnly
-  else return !project.argv.rootOnly
+  if (gitDir.trim().startsWith('fatal:') ? false
+    : (gitDir.trim() === '.git') ? !project.targets[name].workspaces || project.argv.root || project.argv.rootOnly
+      : !project.argv.rootOnly) {
+    return gitDir.trim().slice(0, -4) ? resolve(gitDir.trim().slice(0, -4))
+      : resolve(process.cwd(), name.slice(1))
+  }
 }
 
 type Action = (project: Project, name: string, git: SimpleGit) => Promise<boolean>
@@ -28,6 +39,7 @@ const subcommands: Record<string, [Action, Options]> = {}
 
 function yargs() {
   return yargs_()
+    .scriptName('yakumo git')
     .option('root', { type: 'boolean', alias: 'r' })
     .option('rootOnly', { type: 'boolean', alias: 'R' })
     .option('dry', { type: 'boolean' })
@@ -35,38 +47,43 @@ function yargs() {
 }
 
 async function runAction(project: Project, action: Action) {
-  const counter = (await Promise.all(
+  const gitMap: Record<string, string[]> = {}
+
+  await Promise.all(
     Object.keys(project.targets).map(async path => {
       if (!path) return false
-      const git: SimpleGit = simpleGit(path.slice(1))
-      try {
-        if (!await isRepository(project, path, git)) return false
-        return await action(project, path, git)
-      } catch (e) {
-        console.log(red(path), e)
-        return false
-      }
+      const repoRoot = await getRepositoryRoot(project, path)
+      if (!repoRoot) return false
+      ;(gitMap[repoRoot] ||= []).push(path)
     }),
-  )).filter(x => x).length
+  )
+
+  const counter = (await Promise.all(
+    Object.entries(gitMap).map(async ([x, paths]) => {
+      let cnt = 0
+      for (const path of paths) {
+        const git: SimpleGit = simpleGit(path.slice(1))
+        try {
+          cnt += await action(project, path, git) ? 1 : 0
+        } catch (e) {
+          console.log(red(path), e)
+          return 0
+        }
+      }
+      return cnt
+    }),
+  )).reduce((x, y) => x + y, 0)
+
   console.log(green(`Successfully processed ${counter} repositories`))
 }
 
+const globalYargs = yargs()
+
 function registerSubcommand(cmd: string, action: Action, options?: Options) {
   subcommands[cmd] = [action, options]
+  globalYargs.command(cmd, '')
   register(`git/${cmd}`, (project) => runAction(project, action), options)
 }
-
-register('git', async (project) => {
-  const subcommand = project.argv._.shift()
-  if (!subcommand || !subcommands[subcommand]) return
-  const [action, options] = subcommands[subcommand]
-
-  project.argv.config = undefined
-  project.argv = { config: options, ...parse(unparse(project.argv), options) }
-
-  if (await project.serial('execute.trigger', 'git', options)) return
-  await runAction(project, action)
-}, { manual: true })
 
 registerSubcommand('status', async (project, path, git) => {
   const packageRoot = resolve(process.cwd(), path.slice(1)),
@@ -83,6 +100,16 @@ registerSubcommand('status', async (project, path, git) => {
   }
   return true
 }, yargs().option('workingDirectories', { type: 'string', alias: 'W' }).build())
+
+registerSubcommand('fetch', async (project, path, git) => {
+  await git.fetch()
+  return true
+}, yargs().build())
+
+registerSubcommand('pull', async (project, path, git) => {
+  await git.pull(project.argv.remote, project.argv.branch)
+  return true
+}, yargs().option('remote', { type: 'string' }).option('branch', { type: 'string' }).build())
 
 registerSubcommand('add', async (project, path, git) => {
   await git.add('.')
@@ -123,3 +150,18 @@ registerSubcommand('chore', async (project, path, git) => {
     return true
   }
 }, yargs().option('message', { type: 'string', alias: 'm', default: '' }).build())
+
+register('git', async (project) => {
+  const subcommand = project.argv._.shift()
+  if (!subcommand || !subcommands[subcommand]) {
+    globalYargs.showHelp()
+    return
+  }
+  const [action, options] = subcommands[subcommand]
+
+  project.argv.config = undefined
+  project.argv = { config: options, ...parse(unparse(project.argv), options) }
+
+  if (await project.serial('execute.trigger', 'git', options)) return
+  await runAction(project, action)
+}, globalYargs.build<Options>({ manual: true }))

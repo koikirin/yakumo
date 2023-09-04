@@ -1,8 +1,10 @@
 import { Awaitable, pick, Promisify } from 'cosmokit'
 import { addHook, commands, hooks, Options, Project } from 'yakumo'
-import { Options as ParserOptions } from 'yargs-parser'
+import parse, { Options as ParserOptions } from 'yargs-parser'
 import unparse from 'yargs-unparser'
 import * as yargs_ from 'yargs'
+
+export { parse, unparse }
 
 declare module 'yakumo' {
   export interface Project {
