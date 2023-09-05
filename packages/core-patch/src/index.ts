@@ -61,7 +61,7 @@ async function beforeExecute(project: Project, name: string, options: Options = 
   return ret
 }
 
-export function register(name: string, callback: (project: Project) => void, options: Options = {}) {
+function register(name: string, callback: (project: Project) => void, options: Options = {}) {
   const manual = options.manual
   commands[name] = [async (project) => {
     project.argv.config.manual = manual

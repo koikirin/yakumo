@@ -25,9 +25,9 @@
   ],
   "peerDependencies": {
     "yakumo": "^0.3.13",
-    "yakumo-core-patch": "^0.4.3",
-    "yakumo-filter": "^0.3.1",
-    "yakumo-locate": "^0.3.2",
-    "yakumo-rewrite": "^0.2.0"
+    "yakumo-core-patch": "^0.4.4",
+    "yakumo-filter": "^0.3.2",
+    "yakumo-locate": "^0.3.3",
+    "yakumo-rewrite": "^0.2.1"
   }
 }

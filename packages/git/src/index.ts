@@ -134,10 +134,8 @@ registerSubcommand('commit', async (project, path, git) => {
 }, yargs().option('message', { type: 'string', alias: 'm', default: '' }).build(), 'single')
 
 registerSubcommand('push', async (project, path, git) => {
-  if ((await git.status()).isClean()) {
-    await git.push(project.argv.remote, project.argv.branch)
-    return true
-  }
+  const r = await git.push(project.argv.remote, project.argv.branch)
+  return !r.pushed.length
 }, yargs().option('remote', { type: 'string' }).option('branch', { type: 'string' }).build(), 'single')
 
 registerSubcommand('acp', async (project, path, git) => {
