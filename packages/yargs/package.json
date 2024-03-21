@@ -1,7 +1,8 @@
 {
-  "name": "@hieuzest/yakumo-prelude",
-  "description": "Prelude Yakumo requirements",
-  "version": "0.1.4",
+  "name": "yakumo-yargs",
+  "description": "Full yargs support for yakumo commands",
+  "version": "0.1.1",
+  "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -11,7 +12,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Hieuzest/yakumo.git"
+    "url": "git+https://github.com/Hieuzest/yakumo.git",
+    "directory": "packages/yargs"
   },
   "bugs": {
     "url": "https://github.com/Hieuzest/yakumo/issues"
@@ -24,10 +26,11 @@
     "script"
   ],
   "peerDependencies": {
-    "yakumo": "^0.3.13",
-    "yakumo-core-patch": "^0.4.4",
-    "yakumo-filter": "^0.3.2",
-    "yakumo-locate": "^0.3.3",
-    "yakumo-rewrite": "^0.2.1"
+    "yakumo": "^1.0.0-beta.11"
+  },
+  "dependencies": {
+    "cordis": "^3.13.3",
+    "yargs": "^17.7.2",
+    "yargs-unparser": "^2.0.0"
   }
 }

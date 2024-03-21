@@ -1,7 +1,8 @@
 {
   "name": "yakumo-locate",
   "description": "Locate workspaces flexibly",
-  "version": "0.3.3",
+  "version": "0.5.1",
+  "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -25,10 +26,10 @@
     "script"
   ],
   "peerDependencies": {
-    "yakumo": "^0.3.13",
-    "yakumo-core-patch": "^0.4.4"
+    "yakumo": "^1.0.0-beta.11"
   },
   "dependencies": {
+    "cosmokit": "^1.5.2",
     "kleur": "^4.1.5"
   }
 }

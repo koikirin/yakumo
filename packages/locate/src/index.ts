@@ -1,119 +1,101 @@
-import { bold, cyan, green, reset } from 'kleur'
-import { addHook, confirm, Project } from 'yakumo'
-import { Awaitable, difference, makeArray, pick } from 'cosmokit'
-import {} from 'yakumo-core-patch'
+import { makeArray } from 'cosmokit'
+import Yakumo, { Context, LocateOptions, PackageJson } from 'yakumo'
+import { Eval, executeEval } from 'minato'
+
+export const inject = ['yakumo']
 
 declare module 'yakumo' {
-  export interface Hooks {
-    'locate.trigger'?: (this: Project, name: string, options?: LocateOptions) => Awaitable<void>
+  interface LocateOptions {
+    folder?: boolean
+    package?: boolean
   }
 
-  export interface Commands {
-    [key: string]: LocateConfig
+  namespace Yakumo {
+    interface Intercept {
+      filters?: Eval.Expr<boolean>[]
+    }
+
+  }
+}
+
+function resolveIntercept(this: Yakumo) {
+  const caller = this[Context.current]
+  let result = this.config
+  let intercept = caller[Context.intercept]
+  while (intercept) {
+    result = {
+      ...result,
+      ...intercept.yakumo,
+      alias: {
+        ...result.alias,
+        ...intercept.yakumo?.alias,
+      },
+      exclude: [
+        ...result.exclude || [],
+        ...intercept.yakumo?.exclude || [],
+      ],
+      filters: [
+        ...result.filters || [],
+        ...intercept.yakumo?.filters || [],
+      ],
+    }
+    intercept = Object.getPrototypeOf(intercept)
+  }
+  return result
+}
+
+function locate(this: Yakumo, name: string | string[], options: LocateOptions = {}) {
+  const o: LocateOptions = { folder: true, package: true, ...this.argv.locate || {}, ...options }
+  const { alias, exclude, filters } = resolveIntercept.apply(this)
+  const defaultFilter = o.filter || ((meta) => o.includeRoot || !meta.workspaces)
+  const filter = (meta: PackageJson, path: string) => {
+    return defaultFilter(meta, path) && !exclude?.some((pattern) => {
+      const matcher = new RegExp('^' + pattern.replace(/\*/g, '[^/]+') + '$')
+      return (o.folder && (path.endsWith('/' + name) || matcher.test(path) || matcher.test(path && path.slice(1))))
+      || (o.package && ((pattern.startsWith('!') ? (name.slice(1) === meta.name) : matcher.test(meta.name))))
+    }) && (!filters?.length || filters.some((expr) => executeEval({ _: { path, ...meta } }, expr)))
+  }
+  if (Array.isArray(name)) {
+    if (!name.length) {
+      return Object.keys(this.workspaces).filter((folder) => {
+        return filter(this.workspaces[folder], folder)
+      })
+    } else {
+      return name.flatMap((name) => this.locate(name, o))
+    }
   }
 
-  export interface Arguments {
-    locate?: LocateOptions | false
-  }
-}
-
-export interface LocateConfig {
-  'exclude-patterns': string[]
-}
-
-export interface LocateOptions {
-  ask?: boolean
-  root?: boolean
-  folder?: boolean
-  package?: boolean
-}
-
-const buildFnmatch = (glob) => {
-  const matcher = glob
-    .replace(/\*/g, '.*')
-    .replace(/\?/g, '.')
-  const r = new RegExp(`^${matcher}$`)
-  return r
-}
-
-function locateViaFolder(project: Project, name: string, options: LocateOptions = {}) {
-  if (project.config.alias[name]) {
-    return makeArray(project.config.alias[name]).map((path) => {
-      if (!project.workspaces[path]) {
+  if (alias?.[name]) {
+    return makeArray(alias[name]).map((path) => {
+      if (!this.workspaces[path]) {
         throw new Error(`cannot find workspace ${path} resolved by ${name}`)
       }
       return path
     })
   }
 
-  const targets = Object.keys(project.workspaces).filter((folder) => {
-    const matcher = buildFnmatch(name)
-    const json = project.workspaces[folder]
-    if (!options.root && json.workspaces) return
-    const [last] = folder.split('/').reverse()
-    return name === last || matcher.test(folder) || matcher.test(folder && folder.slice(1))
+  const matcher = new RegExp('^' + name.replace(/\*/g, '[^/]+') + '$')
+  const targets = Object.keys(this.workspaces).filter((folder) => {
+    if (!filter(this.workspaces[folder], folder)) return
+    const meta = this.workspaces[folder]
+    const [last] = meta.name.split('/').reverse()
+    return (o.folder && (folder.endsWith('/' + name) || matcher.test(folder) || matcher.test(folder && folder.slice(1))))
+      || (o.package && ((name.startsWith('!') ? (name.slice(1) === meta.name) : (matcher.test(meta.name) || matcher.test(last)))))
+  }).filter((folder) => {
+    return filter(this.workspaces[folder], folder)
   })
+
+  if (!targets.length) {
+    throw new Error(`cannot find workspace "${name}"`)
+  }
+
   return targets
 }
 
-function locateViaPackage(project: Project, name: string, options: LocateOptions = {}) {
-  const matcher = buildFnmatch(name)
-  const targets = Object.keys(project.workspaces).filter((folder) => {
-    const json = project.workspaces[folder]
-    if (!options.root && json.workspaces) return
-    const [last] = json.name.split('/').reverse()
-    return (name.startsWith('!') && name.slice(1) === json.name) || matcher.test(json.name) || matcher.test(last)
+export function apply(ctx: Context) {
+  ctx.effect(() => {
+    const oldLocate = ctx.yakumo.locate
+    ctx.yakumo.locate = locate
+    return () => ctx.yakumo.locate = oldLocate
   })
-  return targets
 }
-
-function locate(project: Project, name: string, options: LocateOptions = {}) {
-  return [
-    ...options.folder ? locateViaFolder(project, name, options) : [],
-    ...options.package ? locateViaPackage(project, name, options) : [],
-  ]
-}
-
-async function setTargets(project: Project, name: string, options: LocateOptions = {}) {
-  const o = { root: false, folder: true, package: true, ...project.argv.locate || {}, ...options }
-  const parent = name.split('/')[0]
-  const excludes = (project.config.commands?.[name]?.['exclude-patterns'] ?? project.config.commands?.[parent]?.['exclude-patterns'])
-    ?.flatMap(name => locate(project, name, o)) || []
-  const includes = (project.argv._.length ? project.argv._ : ['*']).flatMap((arg: string) => locate(project, arg, o))
-  project.targets = pick(project.workspaces, difference(includes, excludes))
-}
-
-addHook('execute.targets', () => true)
-
-addHook('execute.prepare', async function (name) {
-  if (this.argv.config.manual) {
-    this.targets = { ...this.workspaces }
-    return
-  }
-
-  if (this.argv.locate === false && !this.targets?.length) {
-    this.targets = pick(this.workspaces, this.argv._.flatMap((name: string) => {
-      return this.locate(name)
-    }))
-    return
-  }
-
-  setTargets(this, name)
-})
-
-addHook('execute.before', async function (name) {
-  if (this.argv.config.manual || this.argv.locate === false) {
-    return
-  }
-  if (this.argv.locate?.ask) {
-    const confirmed = await confirm(
-      `${cyan(`[${name}]`)} ${green(`Located ${Object.keys(this.targets).length} workspaces:`)}
-  ${reset(Object.values(this.targets).map(json => json.name).join(' '))}
-  ${bold('Continue to execute ?')}`)
-    if (!confirmed) return true
-  } else {
-    console.log(cyan(`[${name}]`), green(`Located ${Object.keys(this.targets).length} workspaces.`))
-  }
-})
-
-addHook('locate.trigger', async function (name) { setTargets(this, name) })

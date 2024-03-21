@@ -1,7 +1,8 @@
 {
   "name": "yakumo-git",
   "description": "Git operations in Yakumo workspaces",
-  "version": "0.3.3",
+  "version": "0.5.1",
+  "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -26,8 +27,8 @@
     "git"
   ],
   "peerDependencies": {
-    "yakumo": "^0.3.13",
-    "yakumo-core-patch": "^0.4.4"
+    "yakumo": "^1.0.0-beta.11",
+    "yakumo-yargs": "^0.1.1"
   },
   "dependencies": {
     "kleur": "^4.1.5",

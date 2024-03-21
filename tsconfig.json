@@ -3,10 +3,31 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "yakumo": ["packages/core/src"],
-      "yakumo-*": ["packages/*/src"],
-      "@yakumojs/*": ["packages/*/src"],
+      "yakumo": [
+        "packages/core/src",
+        "packages/core/src/plugins",
+      ],
+      "yakumo-*": [
+        "packages/*/src"
+      ],
+      "@yakumojs/*": [
+        "packages/*/src"
+      ],
     },
   },
+  "references": [
+    {
+      "path": "./packages/locate"
+    },
+    {
+      "path": "./packages/ls"
+    },
+    {
+      "path": "./packages/yargs"
+    },
+    {
+      "path": "./packages/git"
+    },
+  ],
   "files": [],
 }
