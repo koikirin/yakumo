@@ -15,19 +15,5 @@
       ],
     },
   },
-  "references": [
-    {
-      "path": "./packages/locate"
-    },
-    {
-      "path": "./packages/ls"
-    },
-    {
-      "path": "./packages/yargs"
-    },
-    {
-      "path": "./packages/git"
-    },
-  ],
   "files": [],
 }

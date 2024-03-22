@@ -4,8 +4,6 @@
   "version": "1.0.0",
   "workspaces": [
     "external/*",
-    "fixtures/*",
-    "fixtures/default/packages/*",
     "packages/*"
   ],
   "license": "MIT",
@@ -15,11 +13,7 @@
     "bump": "yarn yakumo version",
     "dep": "yarn yakumo upgrade",
     "pub": "yarn yakumo publish",
-    "lint": "eslint --cache",
-    "test": "yarn yakumo test default/index -r esbuild-register",
-    "test:text": "shx rm -rf coverage && c8 -r text yarn test",
-    "test:json": "shx rm -rf coverage && c8 -r json yarn test",
-    "test:html": "shx rm -rf coverage && c8 -r html yarn test"
+    "lint": "eslint --cache"
   },
   "devDependencies": {
     "@cordisjs/eslint-config": "^1.0.4",
