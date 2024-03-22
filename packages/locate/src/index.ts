@@ -15,6 +15,10 @@ declare module 'yakumo' {
       filters?: Eval.Expr<boolean>[]
     }
 
+    interface Augument {
+      locate?: LocateOptions
+    }
+
   }
 }
 
