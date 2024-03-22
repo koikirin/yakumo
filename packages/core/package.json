@@ -28,9 +28,9 @@
   "dependencies": {
     "kleur": "^4.1.5",
     "yakumo": "^1.0.0-beta.11",
-    "yakumo-git": "^0.5.1",
-    "yakumo-locate": "^0.5.1",
-    "yakumo-ls": "^0.2.1",
-    "yakumo-yargs": "^0.1.1"
+    "yakumo-git": "^0.5.2",
+    "yakumo-locate": "^0.5.2",
+    "yakumo-ls": "^0.2.2",
+    "yakumo-yargs": "^0.1.2"
   }
 }
