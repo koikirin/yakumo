@@ -1,0 +1,36 @@
+{
+  "name": "@hieuzest/yakumo",
+  "description": "Fork of Yakumo",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "author": "Hieuzest <girkirin@hotmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hieuzest/yakumo.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Hieuzest/yakumo/issues"
+  },
+  "homepage": "https://github.com/Hieuzest/yakumo",
+  "keywords": [
+    "monorepo",
+    "workspace",
+    "cli",
+    "script"
+  ],
+  "dependencies": {
+    "kleur": "^4.1.5",
+    "yakumo": "^1.0.0-beta.11",
+    "yakumo-git": "^0.5.1",
+    "yakumo-locate": "^0.5.1",
+    "yakumo-ls": "^0.2.1",
+    "yakumo-yargs": "^0.1.1"
+  }
+}

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "yakumo": [
+      "@hieuzest/yakumo": [
         "packages/core/src",
         "packages/core/src/plugins",
       ],

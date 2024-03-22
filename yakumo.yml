@@ -1,4 +1,4 @@
-- name: yakumo
+- name: "@hieuzest/yakumo"
   config:
     pipeline:
       build:
@@ -9,4 +9,3 @@
 - name: yakumo-esbuild
 - name: yakumo-tsc
 - name: yakumo-ls
-- name: yakumo-locate

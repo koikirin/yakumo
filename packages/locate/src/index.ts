@@ -18,7 +18,6 @@ declare module 'yakumo' {
     interface Augument {
       locate?: LocateOptions
     }
-
   }
 }
 

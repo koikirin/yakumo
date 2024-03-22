@@ -22,3 +22,7 @@ The name comes from the Japanese word "八雲". In Touhou Project, Yakumo Yukari
 | [yakumo-yargs](./packages/yargs/)   | [![npm](https://img.shields.io/npm/v/yakumo-yargs?style=flat-square)](https://www.npmjs.com/package/yakumo-yargs)   | Full yargs support for yakumo commands |
 | [yakumo-ls](./packages/ls/)         | [![npm](https://img.shields.io/npm/v/yakumo-ls?style=flat-square)](https://www.npmjs.com/package/yakumo-ls)         | List all Yakumo workspaces             |
 | [yakumo-git](./packages/git/)       | [![npm](https://img.shields.io/npm/v/yakumo-git?style=flat-square)](https://www.npmjs.com/package/yakumo-git)       | Git operations in Yakumo workspaces    |
+
+## @hieuzest/yakumo
+
+Customized fork of Yakumo, providing builtin services and commands.
