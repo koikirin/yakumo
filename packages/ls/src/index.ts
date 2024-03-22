@@ -10,6 +10,6 @@ export function apply(ctx: Context) {
       const json = ctx.yakumo.workspaces[name]
       console.log(`${kleur.green(json.name)} -> ${kleur.cyan(name)}`)
     }
-    console.log(kleur.yellow(`Total: ${kleur.bold(paths.length)} workspaces.`))
+    console.log(kleur.yellow(`Total: ${kleur.bold(paths.length)} packages.`))
   })
 }

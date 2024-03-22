@@ -97,7 +97,7 @@ export default class YakumoGit {
       }
       const [action, options, policy] = this.subcommands[subcommand]
 
-      this.paths = ctx.yakumo.locate(ctx.yakumo.argv._)
+      this.paths = ctx.yakumo.locate(ctx.yakumo.argv._, { includeRoot: true })
       this.ctx.yakumo.argv = { config: options, ...ctx.yargs.parse(ctx.yargs.unparse(this.ctx.yakumo.argv), options) } as any
 
       await this.runAction(action, policy)
@@ -122,7 +122,7 @@ export default class YakumoGit {
       .scriptName('yakumo git')
       .option('root', { type: 'boolean', alias: 'r' })
       .option('rootOnly', { type: 'boolean', alias: 'R' })
-      .option('dry', { type: 'boolean' })
+      // .option('dry', { type: 'boolean' })
       .default('includeRoot', true)
   }
 
