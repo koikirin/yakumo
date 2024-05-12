@@ -6,7 +6,7 @@ import { Arguments, Context, LocateOptions, Manager, Options, PackageJson } from
 import { manager, spawnAsync } from 'yakumo/utils'
 import kleur from 'kleur'
 import { promises as fs, readFileSync } from 'node:fs'
-import { Dict, makeArray } from 'cosmokit'
+import { deduplicate, Dict, makeArray } from 'cosmokit'
 import { } from '@cordisjs/loader'
 import { } from 'yakumo-locate'
 import { } from 'yakumo-yargs'
@@ -46,8 +46,9 @@ const builtinCommands = Object.assign(Object.create(null), {
 })
 
 export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
+  static inject = ['loader']
+
   cwd: string
-  args = process.argv.slice(2)
   argv!: Arguments
   manager: Manager
   workspaces!: Dict<PackageJson>
@@ -61,16 +62,16 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     this.manager = manager
 
     for (const name in config.pipeline || {}) {
-      this.register(name, async () => {
+      this.register(name, async (...rest: any[]) => {
         const tasks = config.pipeline![name]
         for (const task of tasks) {
           const [name, ...args] = task.split(/\s+/g)
-          await this.execute(name, ...args)
+          await this.execute(name, ...args, ...rest)
         }
       })
     }
 
-    builtinServices.forEach(name => ctx.loader.update(ctx, { name } as any))
+    builtinServices.forEach(name => ctx.loader._ensure(ctx, { name }))
   }
 
   register(name: string, callback: () => void, options: Options = {}) {
@@ -132,7 +133,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
           return filter(this.workspaces[folder], folder)
         })
       } else {
-        return name.flatMap((name) => this.locate(name, options))
+        return deduplicate(name.flatMap((name) => this.locate(name, options)))
       }
     }
 
@@ -168,11 +169,9 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     await this.ctx.events.flush()
     if (!this.commands[name]) {
       if (name in builtinCommands) {
-        this.ctx.loader.config.push({
-          name: builtinCommands[name],
-        } as any)
-        await this.ctx.loader.writeConfig()
-        await this.ctx.loader.start()
+        await this.ctx.loader.create({
+          name: 'yakumo/' + name,
+        })
         return this.execute(name, ...args)
       }
       console.error(kleur.red(`unknown command: ${name}`))
@@ -180,10 +179,10 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     }
 
     const [callback, options] = this.commands[name]
-    const argv = yargs([...this.args.slice(1), ...args], options) as Arguments
+    const argv = yargs(args, options) as Arguments
     argv.config = options
     await this.initialize(argv)
-    return callback()
+    return callback(...args)
   }
 
   yargs(argv: string | string[], opts: Options = {}) {
@@ -191,11 +190,13 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
   }
 
   async start() {
-    if (!this.args.length) {
+    if (this.ctx.loader.options.name !== 'yakumo') return
+    const [name, ...args] = process.argv.slice(2)
+    if (!name) {
       console.log('yakumo')
       process.exit(0)
     }
-    this.execute(this.args[0])
+    this.execute(name, ...args)
   }
 
   async install() {
