@@ -1,4 +1,4 @@
-import { makeArray } from 'cosmokit'
+import { deduplicate, makeArray } from 'cosmokit'
 import Yakumo, { Context, LocateOptions, PackageJson } from 'yakumo'
 import { Eval, executeEval } from 'minato'
 
@@ -64,7 +64,7 @@ function locate(this: Yakumo, name: string | string[], options: LocateOptions = 
         return filter(this.workspaces[folder], folder)
       })
     } else {
-      return name.flatMap((name) => this.locate(name, o))
+      return deduplicate(name.flatMap((name) => this.locate(name, o)))
     }
   }
 
