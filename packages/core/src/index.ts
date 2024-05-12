@@ -170,7 +170,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     if (!this.commands[name]) {
       if (name in builtinCommands) {
         await this.ctx.loader.create({
-          name: 'yakumo/' + name,
+          name: builtinCommands[name],
         })
         return this.execute(name, ...args)
       }
