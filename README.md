@@ -25,4 +25,9 @@ The name comes from the Japanese word "八雲". In Touhou Project, Yakumo Yukari
 
 ## @hieuzest/yakumo
 
-Customized fork of Yakumo, providing builtin services and commands.
+Customized fork of Yakumo, providing extra features and builtin plugins.
+
+### Usage
+
+- add `@hieuzest/yakumo` to the project devDependencies and install
+- change `name: yakumo` of the original `yakumo.yml` to `name: '@hieuzest/yakumo'`
