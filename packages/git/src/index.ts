@@ -97,6 +97,10 @@ export default class YakumoGit {
       }
       const [action, options, policy] = this.subcommands[subcommand]
 
+      if (!ctx.yakumo.argv._.length && !ctx.yakumo.argv.all) {
+        console.log(kleur.red('Option -A or --all is required to process wildcard workspaces'))
+        return
+      }
       this.paths = ctx.yakumo.locate(ctx.yakumo.argv._, { includeRoot: true })
       this.ctx.yakumo.argv = { config: options, ...ctx.yargs.parse(ctx.yargs.unparse(this.ctx.yakumo.argv), options) } as any
 
@@ -122,6 +126,7 @@ export default class YakumoGit {
       .scriptName('yakumo git')
       .option('root', { type: 'boolean', alias: 'r' })
       .option('rootOnly', { type: 'boolean', alias: 'R' })
+      .option('all', { type: 'boolean', alias: 'A' })
       // .option('dry', { type: 'boolean' })
       .default('includeRoot', true)
   }
