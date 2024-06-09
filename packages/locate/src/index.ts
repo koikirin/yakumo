@@ -1,8 +1,7 @@
 import { deduplicate, makeArray } from 'cosmokit'
 import Yakumo, { Context, LocateOptions, PackageJson } from 'yakumo'
 import { Eval, executeEval } from 'minato'
-
-export const inject = ['yakumo']
+import { Service } from 'cordis'
 
 declare module 'yakumo' {
   interface LocateOptions {
@@ -95,10 +94,17 @@ function locate(this: Yakumo, name: string | string[], options: LocateOptions = 
   return targets
 }
 
-export function apply(ctx: Context) {
-  ctx.effect(() => {
-    const oldLocate = ctx.yakumo.locate
-    ctx.yakumo.locate = locate
-    return () => ctx.yakumo.locate = oldLocate
-  })
+export class LocateService extends Service<unknown, Context> {
+  static inject = { required: ['yakumo'] }
+
+  constructor(ctx: Context) {
+    super(ctx, 'locate')
+    ctx.effect(() => {
+      const oldLocate = ctx.yakumo.locate
+      ctx.yakumo.locate = locate
+      return () => ctx.yakumo.locate = oldLocate
+    })
+  }
 }
+
+export default LocateService

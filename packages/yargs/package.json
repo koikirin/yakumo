@@ -1,7 +1,7 @@
 {
   "name": "yakumo-yargs",
   "description": "Full yargs support for yakumo commands",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -29,6 +29,7 @@
     "yakumo": "^1.0.0-beta.14"
   },
   "dependencies": {
+    "cordis": "^3.16.0",
     "yargs": "^17.7.2",
     "yargs-unparser": "^2.0.0"
   },

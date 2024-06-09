@@ -29,10 +29,10 @@ export namespace Yakumo {
   }
 }
 
-const builtinServices = [
-  'yakumo-locate',
-  'yakumo-yargs',
-]
+const builtinServices = {
+  'locate': 'yakumo-locate',
+  'yargs': 'yakumo-yargs',
+}
 
 const builtinCommands = Object.assign(Object.create(null), {
   'list': 'yakumo/list',
@@ -71,7 +71,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
       })
     }
 
-    builtinServices.forEach(name => ctx.loader._ensure(ctx, { name }))
+    Object.values(builtinServices).forEach(name => ctx.loader.root.create({ name }))
   }
 
   register(name: string, callback: () => void, options: Options = {}) {
@@ -190,12 +190,13 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
   }
 
   async start() {
-    if (this.ctx.loader.options.name !== 'yakumo') return
+    if (this.ctx.loader.config.name !== 'yakumo') return
     const [name, ...args] = process.argv.slice(2)
     if (!name) {
       console.log('yakumo')
       process.exit(0)
     }
+    await new Promise(resolve => this.ctx.inject(Object.keys(builtinServices), resolve))
     this.execute(name, ...args)
   }
 

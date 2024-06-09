@@ -1,4 +1,4 @@
-import { isAbsolute, join, relative, resolve } from 'path'
+import { isAbsolute, join, relative, resolve } from 'node:path'
 import { SimpleGit, simpleGit } from 'simple-git'
 import kleur from 'kleur'
 import { Context, Options } from 'yakumo'
