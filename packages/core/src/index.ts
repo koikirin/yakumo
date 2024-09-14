@@ -6,7 +6,7 @@ import { Arguments, Context, LocateOptions, Manager, Options, PackageJson } from
 import { manager, spawnAsync } from 'yakumo/utils'
 import kleur from 'kleur'
 import { promises as fs, readFileSync } from 'node:fs'
-import { deduplicate, Dict, makeArray } from 'cosmokit'
+import { deduplicate, Dict, makeArray, noop } from 'cosmokit'
 import { } from '@cordisjs/loader'
 import { } from 'yakumo-locate'
 import { } from 'yakumo-yargs'
@@ -80,8 +80,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     this.commands[name] = [callback, options]
   }
 
-  async initialize(argv: Arguments) {
-    this.argv = argv
+  async initialize() {
     const folders = await globby(meta.workspaces || [], {
       cwd,
       onlyDirectories: true,
@@ -181,9 +180,16 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
 
     const [callback, options] = this.commands[name]
     const argv = this.yargs(args, options) as Arguments
+    await this.initialize()
+    if (!name.startsWith('yakumo:') && name !== 'run') {
+      await this.execute('run', ...argv._, '--', `yakumo:before:${name}`).catch(noop)
+    }
     argv.config = options
-    await this.initialize(argv)
-    return callback(...args)
+    this.argv = argv
+    await callback(...args)
+    if (!name.startsWith('yakumo:') && name !== 'run') {
+      await this.execute('run', ...argv._, '--', `yakumo:after:${name}`).catch(noop)
+    }
   }
 
   yargs(argv: string | string[], opts: Options = {}) {
