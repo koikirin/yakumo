@@ -1,10 +1,16 @@
 {
   "name": "@hieuzest/yakumo",
   "description": "Fork of Yakumo",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
+  "exports": {
+    ".": "./lib/index.js",
+    "./upgrade": "./lib/plugins/upgrade.js",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
   "files": [
     "lib"
   ],

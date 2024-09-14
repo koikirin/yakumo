@@ -9,3 +9,6 @@
 - name: yakumo-esbuild
 - name: yakumo-tsc
 - name: yakumo-ls
+- name: yakumo/run
+- name: yakumo/version
+- name: "@hieuzest/yakumo/upgrade"

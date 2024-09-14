@@ -12,6 +12,7 @@ import { } from 'yakumo-locate'
 import { } from 'yakumo-yargs'
 
 export * from 'yakumo'
+export type { } from 'yakumo-yargs'
 
 export const cwd = process.cwd()
 const content = readFileSync(`${cwd}/package.json`, 'utf8')
@@ -41,6 +42,7 @@ const builtinCommands = Object.assign(Object.create(null), {
   'test': 'yakumo/test',
   'upgrade': 'yakumo/upgrade',
   'version': 'yakumo/version',
+  'run': 'yakumo/run',
   'ls': 'yakumo-ls',
   'git': 'yakumo-git',
 })
@@ -98,9 +100,8 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
   }
 
   resolveIntercept(): Yakumo.Intercept {
-    const caller = this[Context.current]
     let result = this.config
-    let intercept = caller[Context.intercept]
+    let intercept = this.ctx[Context.intercept]
     while (intercept) {
       result = {
         ...result,
@@ -179,13 +180,14 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     }
 
     const [callback, options] = this.commands[name]
-    const argv = yargs(args, options) as Arguments
+    const argv = this.yargs(args, options) as Arguments
     argv.config = options
     await this.initialize(argv)
     return callback(...args)
   }
 
   yargs(argv: string | string[], opts: Options = {}) {
+    (opts.configuration ??= {})['populate--'] = true
     return this.ctx.get('yargs')?.parse(argv, opts) ?? yargs(argv, opts)
   }
 
