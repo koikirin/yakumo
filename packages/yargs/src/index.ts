@@ -1,8 +1,8 @@
 import { Service } from 'cordis'
-import { Context, Options } from 'yakumo'
+import { Arguments, Context, Options } from 'yakumo'
 import parse, { Options as ParserOptions } from 'yargs-parser'
 import unparse from 'yargs-unparser'
-import yargs, { Arguments, Argv } from 'yargs'
+import yargs, { Argv } from 'yargs'
 
 declare module 'yakumo' {
   interface Context {
@@ -25,7 +25,7 @@ export interface YargsService {
   (): Argv
   declare(name: string, argv: Argv): void
   parse(argv: string | string[], opts: Options): Arguments
-  unparse: typeof unparse
+  unparse(argv: Arguments, opts?: Options): string[]
 }
 
 export class YargsService extends Service<unknown, Context> {
@@ -53,11 +53,14 @@ export class YargsService extends Service<unknown, Context> {
   }
 
   parse(argv: string | string[], opts: Options) {
-    if (opts?.argv) return opts.argv.parseSync(argv)
-    return parse(argv, opts)
+    const res = opts?.argv ? opts.argv.parseSync(argv) : parse(argv, opts)
+    res.config = opts
+    return res
   }
 
-  unparse = unparse
+  unparse(argv: Arguments, opts?: any) {
+    return unparse({ ...argv, config: undefined }, opts)
+  }
 }
 
 export default YargsService
