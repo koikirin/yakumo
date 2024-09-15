@@ -184,7 +184,6 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     if (!name.startsWith('yakumo:') && name !== 'run') {
       await this.execute('run', ...argv._, '--', `yakumo:before:${name}`).catch(noop)
     }
-    argv.config = options
     this.argv = argv
     await callback(...args)
     if (!name.startsWith('yakumo:') && name !== 'run') {

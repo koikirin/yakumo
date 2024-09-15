@@ -102,7 +102,7 @@ export default class YakumoGit {
         return
       }
       this.paths = ctx.yakumo.locate(ctx.yakumo.argv._, { includeRoot: true })
-      this.ctx.yakumo.argv = { config: options, ...ctx.yargs.parse(ctx.yargs.unparse(this.ctx.yakumo.argv), options) } as any
+      this.ctx.yakumo.argv = ctx.yargs.parse(ctx.yargs.unparse(this.ctx.yakumo.argv), options)
 
       await this.runAction(action, policy)
     }, this.globalYargs.build())
