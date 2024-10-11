@@ -1,7 +1,7 @@
 {
   "name": "yakumo-locate",
   "description": "Locate workspaces flexibly",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -12,13 +12,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Hieuzest/yakumo.git",
+    "url": "git+https://github.com/koikirin/yakumo.git",
     "directory": "packages/locate"
   },
   "bugs": {
-    "url": "https://github.com/Hieuzest/yakumo/issues"
+    "url": "https://github.com/koikirin/yakumo/issues"
   },
-  "homepage": "https://github.com/Hieuzest/yakumo",
+  "homepage": "https://github.com/koikirin/yakumo",
   "keywords": [
     "monorepo",
     "workspace",
