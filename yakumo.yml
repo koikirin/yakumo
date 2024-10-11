@@ -11,4 +11,5 @@
 - name: yakumo-ls
 - name: yakumo/run
 - name: yakumo/version
+- name: yakumo/publish
 - name: "@hieuzest/yakumo/upgrade"

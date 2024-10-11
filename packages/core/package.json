@@ -1,13 +1,14 @@
 {
   "name": "@hieuzest/yakumo",
   "description": "Fork of Yakumo",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "exports": {
     ".": "./lib/index.js",
     "./upgrade": "./lib/plugins/upgrade.js",
+    "./verbose": "./lib/plugins/verbose.js",
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
@@ -40,9 +41,9 @@
     "detect-indent": "^6.1.0",
     "globby": "^11.1.0",
     "kleur": "^4.1.5",
-    "yakumo-git": "^0.5.6",
-    "yakumo-locate": "^0.6.1",
-    "yakumo-ls": "^0.2.4",
-    "yakumo-yargs": "^0.2.0"
+    "yakumo-git": "^0.5.7",
+    "yakumo-locate": "^0.6.2",
+    "yakumo-ls": "^0.2.5",
+    "yakumo-yargs": "^0.2.1"
   }
 }
