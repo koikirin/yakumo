@@ -2,7 +2,7 @@ import * as cordis from 'cordis'
 import globby from 'globby'
 import yargs from 'yargs-parser'
 import detect from 'detect-indent'
-import { Arguments, Context, LocateOptions, Manager, Options, PackageJson } from 'yakumo'
+import { Arguments, Yakumo as BaseYakumo, Context, LocateOptions, Manager, Options, PackageJson } from 'yakumo'
 import { manager, spawnAsync } from 'yakumo/utils'
 import kleur from 'kleur'
 import { promises as fs, readFileSync } from 'node:fs'
@@ -18,15 +18,16 @@ export const cwd = process.cwd()
 const content = readFileSync(`${cwd}/package.json`, 'utf8')
 export const meta: PackageJson = JSON.parse(content)
 
-export namespace Yakumo {
-  export interface Intercept {
-    alias?: Dict<string | string[]>
-    exclude?: string[]
+declare module 'yakumo' {
+  export interface Context {
+    yakumo: Yakumo
+    register(name: string, callback: (...rest: string[]) => void, options?: Options): void
   }
 
-  export interface Config extends Intercept {
-    commands?: Dict
-    pipeline?: Dict<string[]>
+  export namespace Yakumo {
+    export interface Config {
+      verbose?: boolean
+    }
   }
 }
 
@@ -45,9 +46,10 @@ const builtinCommands = Object.assign(Object.create(null), {
   'run': 'yakumo/run',
   'ls': 'yakumo-ls',
   'git': 'yakumo-git',
+  'verbose': '@hieuzest/yakumo/verbose',
 })
 
-export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
+export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
   static inject = ['loader']
 
   cwd: string
@@ -57,7 +59,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
   indent = detect(content).indent
   commands: Dict = {}
 
-  constructor(public ctx: Context, public config: Yakumo.Config) {
+  constructor(public ctx: Context, public config: BaseYakumo.Config) {
     super(ctx, 'yakumo', true)
     ctx.mixin('yakumo', ['register'])
     this.cwd = cwd
@@ -68,7 +70,8 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
         const tasks = config.pipeline![name]
         for (const task of tasks) {
           const [name, ...args] = task.split(/\s+/g)
-          await this.execute(name, ...args, ...rest)
+          const index = args.indexOf('--')
+          await this.execute(name, ...args.slice(0, index === -1 ? undefined : index), ...rest, ...(index === -1 ? [] : args.slice(index)))
         }
       })
     }
@@ -76,7 +79,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     Object.values(builtinServices).forEach(name => ctx.loader.root.create({ name }))
   }
 
-  register(name: string, callback: () => void, options: Options = {}) {
+  register(name: string, callback: (...rest: string[]) => void, options: Options = {}) {
     this.commands[name] = [callback, options]
   }
 
@@ -98,7 +101,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     }))).filter(Boolean))
   }
 
-  resolveIntercept(): Yakumo.Intercept {
+  resolveIntercept(): BaseYakumo.Intercept {
     let result = this.config
     let intercept = this.ctx[Context.intercept]
     while (intercept) {
@@ -166,6 +169,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
   }
 
   async execute(name: string, ...args: string[]) {
+    if (this.config.verbose) console.log('$', name, ...args)
     await this.ctx.events.flush()
     if (!this.commands[name]) {
       if (name in builtinCommands) {
@@ -182,7 +186,7 @@ export default class Yakumo extends cordis.Service<Yakumo.Config, Context> {
     const argv = this.yargs(args, options) as Arguments
     await this.initialize()
     if (!name.startsWith('yakumo:') && name !== 'run') {
-      await this.execute('run', ...argv._, '--', `yakumo:before:${name}`).catch(noop)
+      await this.execute('run', ...argv._, '--', `yakumo:before:${name}`).catch((err: any) => this.config.verbose && console.warn(err))
     }
     this.argv = argv
     await callback(...args)
