@@ -6,7 +6,7 @@ import { Arguments, Yakumo as BaseYakumo, Context, LocateOptions, Manager, Optio
 import { manager, spawnAsync } from 'yakumo/utils'
 import kleur from 'kleur'
 import { promises as fs, readFileSync } from 'node:fs'
-import { deduplicate, Dict, makeArray, noop } from 'cosmokit'
+import { deduplicate, Dict, makeArray } from 'cosmokit'
 import { } from '@cordisjs/loader'
 import { } from 'yakumo-locate'
 import { } from 'yakumo-yargs'
@@ -169,7 +169,7 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
   }
 
   async execute(name: string, ...args: string[]) {
-    if (this.config.verbose) console.log('$', name, ...args)
+    if (this.config.verbose) console.log(kleur.grey(['$', name, ...args].join(' ')))
     await this.ctx.events.flush()
     if (!this.commands[name]) {
       if (name in builtinCommands) {
@@ -186,12 +186,14 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
     const argv = this.yargs(args, options) as Arguments
     await this.initialize()
     if (!name.startsWith('yakumo:') && name !== 'run') {
-      await this.execute('run', ...argv._, '--', `yakumo:before:${name}`).catch((err: any) => this.config.verbose && console.warn(err))
+      await this.execute('run', ...argv._, '--', `yakumo:before:${name}`)
+        .catch((err: any) => name !== 'verbose' && this.config.verbose && console.warn(err))
     }
     this.argv = argv
     await callback(...args)
     if (!name.startsWith('yakumo:') && name !== 'run') {
-      await this.execute('run', ...argv._, '--', `yakumo:after:${name}`).catch(noop)
+      await this.execute('run', ...argv._, '--', `yakumo:after:${name}`)
+        .catch((err: any) => name !== 'verbose' && this.config.verbose && console.warn(err))
     }
   }
 
