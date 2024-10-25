@@ -32,8 +32,8 @@ declare module 'yakumo' {
   }
 
   export interface Events {
-    'yakumo/before-execute'(name: string, ...args: string[]): void
-    'yakumo/after-execute'(name: string, ...args: string[]): void
+    'yakumo/before-execute'(name: string, args: string[]): void
+    'yakumo/after-execute'(name: string, args: string[]): void
   }
 }
 
@@ -192,10 +192,10 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
     const argv = this.yargs(args, options) as Arguments
     await this.initialize()
 
-    await this.ctx.serial(argv, 'yakumo/before-execute', name, ...args)
+    await this.ctx.serial(argv, 'yakumo/before-execute', name, args)
     this.argv = argv
     await callback(...args)
-    await this.ctx.serial(argv, 'yakumo/after-execute', name, ...args)
+    await this.ctx.serial(argv, 'yakumo/after-execute', name, args)
   }
 
   yargs(argv: string | string[], opts: Options = {}) {
