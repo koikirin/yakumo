@@ -27,13 +27,20 @@ declare module 'yakumo' {
   export namespace Yakumo {
     export interface Config {
       verbose?: boolean
+      hooks?: boolean
     }
+  }
+
+  export interface Events {
+    'yakumo/before-execute'(name: string, ...args: string[]): void
+    'yakumo/after-execute'(name: string, ...args: string[]): void
   }
 }
 
 const builtinServices = {
   'locate': 'yakumo-locate',
   'yargs': 'yakumo-yargs',
+  'yakumo/hooks': '@hieuzest/yakumo/hooks',
 }
 
 const builtinCommands = Object.assign(Object.create(null), {
@@ -185,16 +192,11 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
     const [callback, options] = this.commands[name]
     const argv = this.yargs(args, options) as Arguments
     await this.initialize()
-    if (!name.startsWith('yakumo:') && name !== 'run') {
-      await this.execute('run', ...argv._, '--', `yakumo:before:${name}`)
-        .catch((err: any) => name !== 'verbose' && this.config.verbose && console.warn(err))
-    }
+
+    await this.ctx.serial(argv, 'yakumo/before-execute', name, ...args)
     this.argv = argv
     await callback(...args)
-    if (!name.startsWith('yakumo:') && name !== 'run') {
-      await this.execute('run', ...argv._, '--', `yakumo:after:${name}`)
-        .catch((err: any) => name !== 'verbose' && this.config.verbose && console.warn(err))
-    }
+    await this.ctx.serial(argv, 'yakumo/after-execute', name, ...args)
   }
 
   yargs(argv: string | string[], opts: Options = {}) {
