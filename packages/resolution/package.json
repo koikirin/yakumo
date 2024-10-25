@@ -1,0 +1,34 @@
+{
+  "name": "yakumo-resolution",
+  "description": "Add packages to resolutions",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "author": "Hieuzest <girkirin@hotmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koikirin/yakumo.git",
+    "directory": "packages/resolution"
+  },
+  "bugs": {
+    "url": "https://github.com/koikirin/yakumo/issues"
+  },
+  "homepage": "https://github.com/koikirin/yakumo",
+  "keywords": [
+    "monorepo",
+    "workspace",
+    "cli",
+    "script"
+  ],
+  "peerDependencies": {
+    "yakumo": "^1.0.0-beta.14"
+  },
+  "dependencies": {
+    "kleur": "^4.1.5"
+  }
+}
