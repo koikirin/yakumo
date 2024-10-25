@@ -176,7 +176,6 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
   }
 
   async execute(name: string, ...args: string[]) {
-    if (this.config.verbose) console.log(kleur.grey(['$', name, ...args].join(' ')))
     await this.ctx.events.flush()
     if (!this.commands[name]) {
       if (name in builtinCommands) {
