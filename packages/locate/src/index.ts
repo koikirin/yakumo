@@ -53,8 +53,8 @@ function locate(this: Yakumo, name: string | string[], options: LocateOptions = 
   const filter = (meta: PackageJson, path: string) => {
     return defaultFilter(meta, path) && !exclude?.some((pattern) => {
       const matcher = new RegExp('^' + pattern.replace(/\*/g, '[^/]+') + '$')
-      return (o.folder && (path.endsWith('/' + name) || matcher.test(path) || matcher.test(path && path.slice(1))))
-      || (o.package && ((pattern.startsWith('!') ? (name.slice(1) === meta.name) : matcher.test(meta.name))))
+      return (o.folder && (path.endsWith('/' + pattern) || matcher.test(path) || matcher.test(path && path.slice(1))))
+      || (o.package && ((pattern.startsWith('!') ? (pattern.slice(1) === meta.name) : matcher.test(meta.name))))
     }) && (!filters?.length || filters.some((expr) => executeEval({ _: { path, ...meta } }, expr)))
   }
   if (Array.isArray(name)) {
