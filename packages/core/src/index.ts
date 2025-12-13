@@ -28,6 +28,7 @@ declare module 'yakumo' {
     export interface Config {
       verbose?: boolean
       hooks?: boolean
+      'no-builtins'?: boolean
     }
   }
 
@@ -83,7 +84,9 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
       })
     }
 
-    Object.values(builtinServices).forEach(name => ctx.loader.root.create({ name }))
+    if (!config['no-builtins']) {
+      Object.values(builtinServices).forEach(name => ctx.loader.root.create({ name }))
+    }
   }
 
   register(name: string, callback: (...rest: string[]) => void, options: Options = {}) {
@@ -210,7 +213,9 @@ export default class Yakumo extends cordis.Service<BaseYakumo.Config, Context> {
       console.log('yakumo')
       process.exit(0)
     }
-    await new Promise(resolve => this.ctx.inject(Object.keys(builtinServices), resolve))
+    if (!this.config['no-builtins']) {
+      await new Promise(resolve => this.ctx.inject(Object.keys(builtinServices), resolve))
+    }
     this.execute(name, ...args)
   }
 
