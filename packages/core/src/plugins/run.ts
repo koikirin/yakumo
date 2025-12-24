@@ -14,11 +14,12 @@ export function apply(ctx: Context) {
     })
     for (const path of paths) {
       const agent = manager?.name || 'npm'
-      await spawnAsync([agent, 'run', command, ...rest], {
+      const code = await spawnAsync([agent, 'run', command, ...rest], {
         cwd: cwd + path,
         stdio: 'inherit',
         shell: true,
       })
+      if (code) process.exit(code)
     }
   })
 }

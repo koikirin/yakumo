@@ -1,7 +1,7 @@
 {
   "name": "@hieuzest/yakumo",
   "description": "Fork of Yakumo",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "type": "module",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
